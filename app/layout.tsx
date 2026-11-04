@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Omniscient — XAU/USDT Gold Terminal',
-  description: 'Real-time OKX XAU/USDT perpetual market intelligence across eight timeframes (1m to 4H). Verified exchange data, interactive candlesticks, immutable signal locks on closed candles and transparent risk controls. No guaranteed returns.',
+  title: 'Omniscient — XAUUSDT Order-Flow Scalp Terminal',
+  description: 'Pure OKX V5 order flow for XAU-USDT-SWAP: Solution A tick-exact delta, dual-WebSocket zero-polling feed, 00:00 UTC VWAP, PDH/PDL sweeps and 8 immutable Scalp Trade Cards (1m to 4H) with Signal Agreement. No API keys, no synthetic data.',
   generator: 'v0.app',
   icons: {
     icon: [
