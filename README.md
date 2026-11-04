@@ -5,27 +5,28 @@ powered entirely by **real OKX exchange data** — live ticker, order book, cand
 
 ## Features
 
-- **Eight timeframes**: 1m, 3m, 5m, 15m, 30m, 1H, 2H, 4H — each with its own independent signal engine.
-- **Multi-timeframe signal matrix**: every timeframe shows its direction, ideal entry, stop loss,
-  target 1, target 2 and agreement score at a glance. Click any row to switch the whole terminal.
-- **Immutable signal lock**: once a setup confirms on a *closed* candle its direction, entry, stop
-  and targets are frozen — never rewritten while the lock lives. Every lock carries a deterministic
-  id built from the timeframe and the confirmation close time.
-- **Closed-candle intelligence**: live quotes never rewrite a confirmed direction.
-- **Real-time WebSocket feed**: ticker, order book and all eight candle streams update live, with
-  REST recovery as a fallback.
-- **Indicators**: EMA 21/50, Wilder RSI 14, ATR 14, rolling VWAP, MACD 12/26/9 and market structure.
-- **Market microstructure**: mark price, funding rate, open interest and contract metadata.
-- **Risk calculator**: position sizing from verified contract sizes.
+- **Pure OKX V5 order flow (Solution A)** for `XAU-USDT-SWAP` (displayed as `XAUUSDT`):
+  1. 1m CLV + tick-rule delta estimator on 1,500 historical 1m bars (index 6 `volCcy` = true XAU volume).
+  2. 1m → 3m…4H delta rollup across the last 25 hours (fixes absorption-wick misreads).
+  3. Tick-exact backfill from ~1,000 real taker prints (`/market/trades` + `/market/history-trades`).
+  4. Persistent `okx_xau_flow_YYYY_MM_DD` localStorage ring-buffer so 00:00 UTC CVD survives refreshes.
+- **Zero-polling dual WebSocket**: all 8 `candle*` channels on `/ws/v5/business`; `bbo-tbt`, `trades`,
+  `liquidation-orders`, `mark-price`, `index-tickers`, `funding-rate`, `open-interest` on `/ws/v5/public`.
+  Frames are buffered until REST hydration finishes, trades are keyed by bar-open time per timeframe,
+  gaps heal with `before=` / `after=` cursors, and a ping/pong dead-man's switch halts stale feeds.
+- **Rate-limit safe REST**: per-endpoint sliding windows at 75% of OKX limits, 429 / `50011` back-off,
+  1m bars 1–1,200 from `/market/candles` and 1,201–1,500 from `/market/history-candles`.
+- **Confluence**: PDH / PDL / Asian range sweeps, 00:00 UTC VWAP ±1/2SD, CVD divergence, absorption,
+  ΔPrice vs ΔOI regime, and a 1m–4H delta & EMA20 trend matrix (`confluence_score` −8…+8).
+- **8 Scalp Trade Cards (1m, 3m, 5m, 15m, 30m, 1H, 2H, 4H)** with an 8-factor Signal Agreement %,
+  cross-timeframe alignment, an immutable SCANNING → LOCKED → RESOLVED lock (frozen entry / SL / TP1–3),
+  breakeven and profit trails, max-hold expiry and a one-bar cooldown. Cards use zero extra REST calls.
 
-## Data source
+## Architecture
 
-OKX (`XAU-USDT-SWAP`) is the selected feed. It is the only venue tested that serves the exact
-XAU-USDT perpetual across **all eight** requested timeframes natively.
-
-Binance and Bybit return HTTP 451 (region-restricted) from this deployment and are therefore not
-selectable. MEXC, Bitget and Gate are benchmarked on the **Market data** tab but are not used for
-prices, so charts, tick sizes and signals never mix different markets.
+All market logic runs in the browser (`lib/xau/`): `engine.ts` (boot handshake, sockets, bar state
+machine), `orderflow.ts`, `indicators.ts` (non-drifting two-state EMA/ATR/RSI), `confluence.ts`,
+`scalp-cards.ts`, `rest.ts` (rate limiter) and `ring-buffer.ts`. UI lives in `components/terminal/`.
 
 ## Getting started
 
